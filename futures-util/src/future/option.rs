@@ -1,7 +1,7 @@
 //! Definition of the `Option` (optional step) combinator
 
 use core::pin::Pin;
-use futures_core::future::Future;
+use futures_core::future::{ Future, FusedFuture };
 use futures_core::task::{Context, Poll};
 use pin_utils::unsafe_pinned;
 
@@ -43,6 +43,15 @@ impl<F: Future> Future for OptionFuture<F> {
             Some(x) => x.poll(cx).map(Some),
             None => Poll::Ready(None),
         }
+    }
+}
+
+impl <F: FusedFuture> FusedFuture for OptionFuture<F> {
+    fn is_terminated(&self) -> bool {
+      match &self.option {
+          Some(f) => f.is_terminated(),
+          None => true,
+      }
     }
 }
 
